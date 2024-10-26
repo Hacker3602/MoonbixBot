@@ -1,99 +1,58 @@
 class MoonbixBot {
-    sleep(time) {
-      return new Promise((resolve) => setTimeout(resolve, time));
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
-  
-    run() {
-      setInterval(async () => {
-        const buttonPlayGame = this.findButtonPlayGame();
-        if (!buttonPlayGame) {
-          return;
-        }
-  
-        const event = new MouseEvent("click", {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-        });
-        buttonPlayGame.dispatchEvent(event);
-  
-        await this.sleep(1000);
-  
-        for (let i = 0; i < 50; i++) {
-          await this.sleep(1000);
-          this.simulateLeftClick();
-        }
-  
-        this.findReturnButtonElementsAndClick();
-  
-        await this.sleep(1500);
-      }, 1000);
+
+    async run() {
+        const intervalId = setInterval(async () => {
+            const buttonPlayGame = await this.findButton("#__APP > div > div.Game_game__container__1I7MG.bg-cover.bg-center > div > div.w-full.relative.flex.flex-1.flex-col.gap-8.pt-4.justify-center.items-center > div.w-full.flex.flex-col > div > button");
+            if (!buttonPlayGame) return console.warn("Play Game button not found");
+
+            buttonPlayGame.click();
+            await this.sleep(1000);
+
+            for (let i = 0; i < 50; i++) {
+                await this.sleep(1000);
+                this.simulateClickOnCanvas();
+            }
+
+            this.clickReturnButton();
+
+            await this.sleep(1500);
+        }, 1000);
+
+        setTimeout(() => clearInterval(intervalId), 300000);
     }
-  
-    findButtonPlayGame() {
-      const button = document.querySelector("[class^='Game_entry__playBtn']");
-      // if (button && button.textContent.trim().toLowerCase() === "chơi game") {
-      if (button) {
-        const style = window.getComputedStyle(button);
-        if (style.marginTop === "40px") {
-          return button;
+
+    async findButton(selector) {
+        let button = document.querySelector(selector);
+        for (let i = 0; !button && i < 10; i++) {
+            await this.sleep(500);
+            button = document.querySelector(selector);
         }
-      }
-      return null;
+        return button;
     }
-  
-    findReturnButtonElementsAndClick() {
-      const svgs = document.getElementsByTagName("svg");
-      for (let svg of svgs) {
-        // Check if the SVG matches the specified structure
-        if (
-          svg.outerHTML ===
-          '<svg class="bn-svg absolute top-4 start-4 w-6 h-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.999 11.999l7.071-7.072 1.768 1.768-4.055 4.055H21v2.5H7.785l4.053 4.053-1.768 1.768L3 12v-.001z" fill="currentColor"></path></svg>'
-        ) {
-          const event = new MouseEvent("click", {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-          });
-          svg.dispatchEvent(event);
-        }
-      }
-    }
-  
-    autoMining() {}
-  
-    simulateLeftClick() {
-      const canvas = document.querySelector("canvas");
-      console.error("Canvas: ", canvas);
-      if (canvas) {
-        const event = new MouseEvent("mousedown", {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          button: 0, // 0 indicates the left mouse button
-        });
-        canvas.dispatchEvent(event);
-  
-        const clickEvent = new MouseEvent("mouseup", {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          button: 0, // 0 indicates the left mouse button
-        });
-        canvas.dispatchEvent(clickEvent);
-  
-        canvas.dispatchEvent(
-          new MouseEvent("click", {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-            button: 0, // 0 indicates the left mouse button
-          })
+
+    clickReturnButton() {
+        const svg = Array.from(document.getElementsByTagName("svg")).find(svg => 
+            svg.outerHTML === '<svg class="bn-svg absolute top-4 start-4 w-6 h-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.999 11.999l7.071-7.072 1.768 1.768-4.055 4.055H21v2.5H7.785l4.053 4.053-1.768 1.768L3 12v-.001z" fill="currentColor"></path></svg>'
         );
-      }
+        if (svg) svg.click();
     }
-  }
-  
-  const moonBixBot = new MoonbixBot();
-  moonBixBot.run();
-  
+
+    simulateClickOnCanvas() {
+        const canvas = document.querySelector("canvas");
+        if (!canvas) return console.warn("Canvas not found");
+
+        const { left, top, width, height } = canvas.getBoundingClientRect();
+        const x = left + width / 2;
+        const y = top + height / 2;
+
+        canvas.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientX: x, clientY: y }));
+        canvas.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, clientX: x, clientY: y }));
+        canvas.dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: x, clientY: y }));
+    }
+}
+
+const moonBixBot = new MoonbixBot();
+moonBixBot.run();
