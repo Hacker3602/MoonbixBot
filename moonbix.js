@@ -5,15 +5,22 @@ class MoonbixBot {
 
     async run() {
         const intervalId = setInterval(async () => {
-            const buttonPlayGame = await this.findButtonPlayGame();
+            // Try to find the main Play Game button
+            let buttonPlayGame = await this.findButtonPlayGame();
+            
+            // If the main button is not found, try the alternative button
             if (!buttonPlayGame) {
-                console.warn("Play Game button not found");
-                return;
+                console.warn("Main Play Game button not found. Trying alternative button...");
+                buttonPlayGame = await this.findAlternativeButtonPlayGame();
+            }
+
+            if (!buttonPlayGame) {
+                console.warn("Alternative Play Game button not found. Continuing to search...");
+                return; // Continue to the next iteration without stopping
             }
 
             this.forceClick(buttonPlayGame);
-
-            await this.sleep(1000);
+            await this.sleep(1000); // Optional sleep after clicking
 
             for (let i = 0; i < 50; i++) {
                 await this.sleep(1000);
@@ -21,11 +28,10 @@ class MoonbixBot {
             }
 
             this.findReturnButtonElementsAndClick();
+            await this.sleep(1500); // Optional sleep after finding return button
+        }, 5000); // Check every 5 seconds
 
-            await this.sleep(1500);
-        }, 1000);
-
-        setTimeout(() => clearInterval(intervalId), 300000); // stop after 5 minutes
+        // No timeout, script will run indefinitely
     }
 
     async findButtonPlayGame() {
@@ -38,6 +44,22 @@ class MoonbixBot {
         while (!button && retries > 0) {
             await this.sleep(500);
             button = document.querySelector(buttonSelector);
+            retries--;
+        }
+
+        return button;
+    }
+
+    async findAlternativeButtonPlayGame() {
+        const alternativeButtonSelector = "#__APP > div > div.Game_game__container__1I7MG.bg-cover.bg-center > div > div.w-full.relative.flex.flex-1.flex-col.gap-8.pt-4.justify-center.items-center > div.w-full.flex.flex-col > div.bn-flex.flex-col.gap-4 > button";
+        
+        let button = document.querySelector(alternativeButtonSelector);
+
+        // Check every 500ms until the alternative button is found or timeout
+        let retries = 10; // max 5 seconds
+        while (!button && retries > 0) {
+            await this.sleep(500);
+            button = document.querySelector(alternativeButtonSelector);
             retries--;
         }
 
