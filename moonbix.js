@@ -4,7 +4,8 @@ class MoonbixBot {
     }
 
     async run() {
-        const intervalId = setInterval(async () => {
+        // Start an infinite loop
+        while (true) {
             // Try to find the main Play Game button
             let buttonPlayGame = await this.findButtonPlayGame();
             
@@ -15,23 +16,22 @@ class MoonbixBot {
             }
 
             if (!buttonPlayGame) {
-                console.warn("Alternative Play Game button not found. Continuing to search...");
-                return; // Continue to the next iteration without stopping
+                console.warn("Alternative Play Game button not found. Waiting to try again...");
+            } else {
+                this.forceClick(buttonPlayGame);
+                await this.sleep(1000); // Optional sleep after clicking
+
+                for (let i = 0; i < 50; i++) {
+                    await this.sleep(1000);
+                    this.simulateLeftClick(); // Simulate clicks on the canvas
+                }
+
+                this.findReturnButtonElementsAndClick();
+                await this.sleep(1500); // Optional sleep after finding return button
             }
 
-            this.forceClick(buttonPlayGame);
-            await this.sleep(1000); // Optional sleep after clicking
-
-            for (let i = 0; i < 50; i++) {
-                await this.sleep(1000);
-                this.simulateLeftClick(); // Simulate clicks on the canvas
-            }
-
-            this.findReturnButtonElementsAndClick();
-            await this.sleep(1500); // Optional sleep after finding return button
-        }, 5000); // Check every 5 seconds
-
-        // No timeout, script will run indefinitely
+            await this.sleep(5000); // Wait 5 seconds before trying again
+        }
     }
 
     async findButtonPlayGame() {
@@ -39,14 +39,7 @@ class MoonbixBot {
         
         let button = document.querySelector(buttonSelector);
 
-        // Check every 500ms until the button is found or timeout
-        let retries = 10; // max 5 seconds
-        while (!button && retries > 0) {
-            await this.sleep(500);
-            button = document.querySelector(buttonSelector);
-            retries--;
-        }
-
+        // No retries, just check once
         return button;
     }
 
@@ -55,14 +48,7 @@ class MoonbixBot {
         
         let button = document.querySelector(alternativeButtonSelector);
 
-        // Check every 500ms until the alternative button is found or timeout
-        let retries = 10; // max 5 seconds
-        while (!button && retries > 0) {
-            await this.sleep(500);
-            button = document.querySelector(alternativeButtonSelector);
-            retries--;
-        }
-
+        // No retries, just check once
         return button;
     }
 
